@@ -42,7 +42,6 @@ class Filament(Base):
     settings_bed_temp: Mapped[Optional[int]] = mapped_column(comment="Overridden bed temperature.")
     color_hex: Mapped[Optional[str]] = mapped_column(String(8))
 
-
 class Spool(Base):
     __tablename__ = "spool"
 
@@ -52,6 +51,42 @@ class Spool(Base):
     last_used: Mapped[Optional[datetime]] = mapped_column()
     filament_id: Mapped[int] = mapped_column(ForeignKey("filament.id"))
     filament: Mapped["Filament"] = relationship(back_populates="spools")
+    used_weight: Mapped[float] = mapped_column()
+    location: Mapped[Optional[str]] = mapped_column(String(64))
+    lot_nr: Mapped[Optional[str]] = mapped_column(String(64))
+    comment: Mapped[Optional[str]] = mapped_column(String(1024))
+    archived: Mapped[Optional[bool]] = mapped_column()
+
+class Resin(Base):
+    __tablename__ = "resin"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    registered: Mapped[datetime] = mapped_column()
+    name: Mapped[Optional[str]] = mapped_column(String(64))
+    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendor.id"))
+    vendor: Mapped[Optional["Vendor"]] = relationship(back_populates="resin")
+    bottles: Mapped[list["Bottle"]] = relationship(back_populates="resin")
+    material: Mapped[Optional[str]] = mapped_column(String(64))
+    price: Mapped[Optional[float]] = mapped_column()
+    density: Mapped[float] = mapped_column()
+    weight: Mapped[Optional[float]] = mapped_column(comment="The resin weight of a full bottle (net weight).")
+    bottle_weight: Mapped[Optional[float]] = mapped_column(comment="The weight of an empty bottle.")
+    article_number: Mapped[Optional[str]] = mapped_column(String(64))
+    comment: Mapped[Optional[str]] = mapped_column(String(1024))
+    cure_temp: Mapped[Optional[int]] = mapped_column(comment="Optimal temperature for curing")
+    cure_time: Mapped[Optional[int]] = mapped_column(comment="Optimal curing time ")
+    wash_time: Mapped[Optional[int]] = mapped_column(comment="Washing time")
+    color_hex: Mapped[Optional[str]] = mapped_column(String(8))
+
+class Bottle(Base):
+    __tablename__ = "bottle"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    registered: Mapped[datetime] = mapped_column()
+    first_used: Mapped[Optional[datetime]] = mapped_column()
+    last_used: Mapped[Optional[datetime]] = mapped_column()
+    resin_id: Mapped[int] = mapped_column(ForeignKey("resin.id"))
+    resin: Mapped["Resin"] = relationship(back_populates="bottles")
     used_weight: Mapped[float] = mapped_column()
     location: Mapped[Optional[str]] = mapped_column(String(64))
     lot_nr: Mapped[Optional[str]] = mapped_column(String(64))

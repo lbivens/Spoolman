@@ -126,6 +126,95 @@ class Filament(BaseModel):
             color_hex=item.color_hex,
         )
 
+class Resin(BaseModel):
+    id: int = Field(description="Unique internal ID of this resin type.")
+    registered: datetime = Field(description="When the resin was registered in the database. UTC Timezone.")
+    name: Optional[str] = Field(
+        max_length=64,
+        description=(
+            "Resin name, to distinguish this resin type among others from the same vendor."
+            "Should contain its color for example."
+        ),
+        example="PolyTerra™ Charcoal Black",
+    )
+    vendor: Optional[Vendor] = Field(description="The vendor of this resin type.")
+    material: Optional[str] = Field(
+        max_length=64,
+        description="The material of this resin, e.g. PLA.",
+        example="PLA",
+    )
+    price: Optional[float] = Field(
+        ge=0,
+        description="The price of this resin in the system configured currency.",
+        example=20.0,
+    )
+    density: float = Field(gt=0, description="The density of this resin in g/cm3.", example=1.24)
+    diameter: float = Field(gt=0, description="The diameter of this resin in mm.", example=1.75)
+    weight: Optional[float] = Field(
+        gt=0,
+        description="The weight of the resin in a full bottle, in grams.",
+        example=1000,
+    )
+    bottle_weight: Optional[float] = Field(gt=0, description="The empty bottle weight, in grams.", example=140)
+    article_number: Optional[str] = Field(
+        max_length=64,
+        description="Vendor article number, e.g. EAN, QR code, etc.",
+        example="PM70820",
+    )
+    comment: Optional[str] = Field(
+        max_length=1024,
+        description="Free text comment about this resin type.",
+        example="",
+    )
+    settings_cure_temp: Optional[int] = Field(
+        ge=0,
+        description="Optimal curing temperature, in °C.",
+        example=210,
+    )
+    settings_cure_time: Optional[int] = Field(
+        ge=0,
+        description="Optimal curing time, in s.",
+        example=60,
+    )
+    settings_cure_time: Optional[int] = Field(
+        ge=0,
+        description="Optimal curing time, in s.",
+        example=60,
+    )
+    settings_wash_time: Optional[int] = Field(
+        ge=0,
+        description="Optimal washing time, in s.",
+        example=60,
+    )
+    color_hex: Optional[str] = Field(
+        min_length=6,
+        max_length=8,
+        description="Hexadecimal color code of the resin, e.g. FF0000 for red. Supports alpha channel at the end.",
+        example="FF0000",
+    )
+
+    @staticmethod
+    def from_db(item: models.Resin) -> "Resin":
+        """Create a new Pydantic resin object from a database resin object."""
+        return Resin(
+            id=item.id,
+            registered=item.registered,
+            name=item.name,
+            vendor=Vendor.from_db(item.vendor) if item.vendor is not None else None,
+            material=item.material,
+            price=item.price,
+            density=item.density,
+            diameter=item.diameter,
+            weight=item.weight,
+            bottle_weight=item.bottle_weight,
+            article_number=item.article_number,
+            comment=item.comment,
+            settings_cure_temp=item.settings_cure_temp,
+            settings_cure_time=item.settings_cure_time,
+            settings_wash_time=item.settings_wash_time,
+            color_hex=item.color_hex,
+        )
+
 
 class Spool(BaseModel):
     id: int = Field(description="Unique internal ID of this spool of filament.")
@@ -207,6 +296,86 @@ class Spool(BaseModel):
             archived=item.archived if item.archived is not None else False,
         )
 
+class Bottle(BaseModel):
+    id: int = Field(description="Unique internal ID of this bottle of resin.")
+    registered: datetime = Field(description="When the bottle was registered in the database. UTC Timezone.")
+    first_used: Optional[datetime] = Field(description="First logged occurence of bottle usage. UTC Timezone.")
+    last_used: Optional[datetime] = Field(description="Last logged occurence of bottle usage. UTC Timezone.")
+    resin: Resin = Field(description="The resin type of this bottle.")
+    remaining_weight: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Estimated remaining weight of resin on the bottle in grams. "
+            "Only set if the resin type has a weight set."
+        ),
+        example=500.6,
+    )
+    used_weight: float = Field(ge=0, description="Consumed weight of resin from the bottle in grams.", example=500.3)
+    remaining_length: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Estimated remaining length of resin on the bottle in millimeters."
+            " Only set if the resin type has a weight set."
+        ),
+        example=5612.4,
+    )
+    used_length: float = Field(
+        ge=0,
+        description="Consumed length of resin from the bottle in millimeters.",
+        example=50.7,
+    )
+    location: Optional[str] = Field(max_length=64, description="Where this bottle can be found.", example="Shelf A")
+    lot_nr: Optional[str] = Field(
+        max_length=64,
+        description="Vendor manufacturing lot/batch number of the bottle.",
+        example="52342",
+    )
+    comment: Optional[str] = Field(
+        max_length=1024,
+        description="Free text comment about this specific bottle.",
+        example="",
+    )
+    archived: bool = Field(description="Whether this bottle is archived and should not be used anymore.")
+
+    @staticmethod
+    def from_db(item: models.Bottle) -> "Bottle":
+        """Create a new Pydantic bottle object from a database bottle object."""
+        resin = Resin.from_db(item.resin)
+
+        remaining_weight: Optional[float] = None
+        remaining_length: Optional[float] = None
+        if resin.weight is not None:
+            remaining_weight = max(resin.weight - item.used_weight, 0)
+            remaining_length = length_from_weight(
+                weight=remaining_weight,
+                density=resin.density,
+                diameter=resin.diameter,
+            )
+
+        used_length = length_from_weight(
+            weight=item.used_weight,
+            density=resin.density,
+            diameter=resin.diameter,
+        )
+
+        return Bottle(
+            id=item.id,
+            registered=item.registered,
+            first_used=item.first_used,
+            last_used=item.last_used,
+            resin=resin,
+            used_weight=item.used_weight,
+            used_length=used_length,
+            remaining_weight=remaining_weight,
+            remaining_length=remaining_length,
+            location=item.location,
+            lot_nr=item.lot_nr,
+            comment=item.comment,
+            archived=item.archived if item.archived is not None else False,
+        )
+
 
 class Info(BaseModel):
     version: str = Field(example="0.7.0")
@@ -255,6 +424,11 @@ class SpoolEvent(Event):
     payload: Spool = Field(description="Updated spool.")
     resource: Literal["spool"] = Field(description="Resource type.")
 
+class BottleEvent(Event):
+    """Event."""
+
+    payload: Bottle = Field(description="Updated bottle.")
+    resource: Literal["bottle"] = Field(description="Resource type.")
 
 class FilamentEvent(Event):
     """Event."""
@@ -262,6 +436,11 @@ class FilamentEvent(Event):
     payload: Filament = Field(description="Updated filament.")
     resource: Literal["filament"] = Field(description="Resource type.")
 
+class Resin(Event):
+    """Event."""
+
+    payload: Resin = Field(description="Updated resin.")
+    resource: Literal["resin"] = Field(description="Resource type.")
 
 class VendorEvent(Event):
     """Event."""

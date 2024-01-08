@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from spoolman.database import filament, spool
+from spoolman.database import resin, bottle
 from spoolman.database.database import get_db_session
 
 logger = logging.getLogger(__name__)
@@ -22,17 +23,19 @@ router = APIRouter(
 @router.get(
     "/material",
     name="Find materials",
-    description="Get a list of all filament materials.",
+    description="Get a list of all materials.",
     response_model_exclude_none=True,
     responses={
         200: {
-            "description": "A list of all filament materials.",
+            "description": "A list of all materials.",
             "content": {
                 "application/json": {
                     "example": [
                         "PLA",
                         "ABS",
                         "PETG",
+                        "PC",
+                        "HDPE",
                     ],
                 },
             },
@@ -43,7 +46,7 @@ async def find_materials(
     *,
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[str]:
-    return await filament.find_materials(db=db)
+    return await filament.find_materials(db=db) + resin.find_materials(db=db)
 
 
 @router.get(
@@ -69,7 +72,7 @@ async def find_article_numbers(
     *,
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[str]:
-    return await filament.find_article_numbers(db=db)
+    return await filament.find_article_numbers(db=db) + resin.find_article_numbers(db=db)
 
 
 @router.get(
@@ -95,7 +98,7 @@ async def find_lot_numbers(
     *,
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[str]:
-    return await spool.find_lot_numbers(db=db)
+    return await spool.find_lot_numbers(db=db) + bottle.find_lot_numbers(db=db)
 
 
 @router.get(
@@ -122,4 +125,4 @@ async def find_locations(
     *,
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> list[str]:
-    return await spool.find_locations(db=db)
+    return await spool.find_locations(db=db) + bottle.find_locations(db=db)

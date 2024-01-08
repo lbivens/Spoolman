@@ -27,6 +27,11 @@ def parse_nested_field(base_obj: type[models.Base], field: str) -> attributes.In
     if fields[0] == "filament":
         return parse_nested_field(models.Filament, ".".join(fields[1:]))
 
+    if fields[0] == "resin" and len(fields) == 1:
+        raise ValueError("No field specified for resin")
+    if fields[0] == "resin":
+        return parse_nested_field(models.Resin, ".".join(fields[1:]))
+
     if fields[0] == "vendor" and len(fields) == 1:
         raise ValueError("No field specified for vendor")
     if fields[0] == "vendor":
