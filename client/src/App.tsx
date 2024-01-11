@@ -21,7 +21,7 @@ import { SpoolmanLayout } from "./components/layout";
 import liveProvider from "./components/liveProvider";
 
 interface ResourcePageProps {
-  resource: "spools" | "filaments" | "vendors";
+  resource: "spools" | "filaments" | "resins" | "bottles" | "vendors";
   page: "list" | "create" | "edit" | "show";
   mode?: "create" | "clone";
 }
@@ -116,12 +116,36 @@ function App() {
                   },
                 },
                 {
+                  name: "bottle",
+                  list: "/bottle",
+                  create: "/bottle/create",
+                  clone: "/bottle/clone/:id",
+                  edit: "/bottle/edit/:id",
+                  show: "/bottle/show/:id",
+                  meta: {
+                    canDelete: true,
+                    icon: <FileOutlined />,
+                  },
+                },
+                {
                   name: "filament",
                   list: "/filament",
                   create: "/filament/create",
                   clone: "/filament/clone/:id",
                   edit: "/filament/edit/:id",
                   show: "/filament/show/:id",
+                  meta: {
+                    canDelete: true,
+                    icon: <HighlightOutlined />,
+                  },
+                },
+                {
+                  name: "resin",
+                  list: "/resin",
+                  create: "/resin/create",
+                  clone: "/resin/clone/:id",
+                  edit: "/resin/edit/:id",
+                  show: "/resin/show/:id",
                   meta: {
                     canDelete: true,
                     icon: <HighlightOutlined />,
@@ -176,6 +200,19 @@ function App() {
                     <Route path="edit/:id" element={<LoadableResourcePage resource="spools" page="edit" />} />
                     <Route path="show/:id" element={<LoadableResourcePage resource="spools" page="show" />} />
                   </Route>
+                  <Route path="/bottle">
+                    <Route index element={<LoadableResourcePage resource="bottles" page="list" />} />
+                    <Route
+                      path="create"
+                      element={<LoadableResourcePage resource="bottles" page="create" mode="create" />}
+                    />
+                    <Route
+                      path="clone/:id"
+                      element={<LoadableResourcePage resource="bottles" page="create" mode="clone" />}
+                    />
+                    <Route path="edit/:id" element={<LoadableResourcePage resource="bottles" page="edit" />} />
+                    <Route path="show/:id" element={<LoadableResourcePage resource="bottles" page="show" />} />
+                  </Route>
                   <Route path="/filament">
                     <Route index element={<LoadableResourcePage resource="filaments" page="list" />} />
                     <Route
@@ -188,6 +225,19 @@ function App() {
                     />
                     <Route path="edit/:id" element={<LoadableResourcePage resource="filaments" page="edit" />} />
                     <Route path="show/:id" element={<LoadableResourcePage resource="filaments" page="show" />} />
+                  </Route>
+                  <Route path="/resin">
+                    <Route index element={<LoadableResourcePage resource="resins" page="list" />} />
+                    <Route
+                      path="create"
+                      element={<LoadableResourcePage resource="resins" page="create" mode="create" />}
+                    />
+                    <Route
+                      path="clone/:id"
+                      element={<LoadableResourcePage resource="resins" page="create" mode="clone" />}
+                    />
+                    <Route path="edit/:id" element={<LoadableResourcePage resource="resins" page="edit" />} />
+                    <Route path="show/:id" element={<LoadableResourcePage resource="resins" page="show" />} />
                   </Route>
                   <Route path="/vendor">
                     <Route index element={<LoadableResourcePage resource="vendors" page="list" />} />

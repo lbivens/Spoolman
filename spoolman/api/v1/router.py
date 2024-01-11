@@ -15,7 +15,7 @@ from spoolman.database.database import backup_global_db
 from spoolman.exceptions import ItemNotFoundError
 from spoolman.ws import websocket_manager
 
-from . import filament, models, other, spool, vendor
+from . import filament, models, other, spool, vendor, bottle, resin
 
 logger = logging.getLogger(__name__)
 
@@ -106,5 +106,7 @@ async def notify(
 # Add routers
 app.include_router(filament.router)
 app.include_router(spool.router)
+app.include_router(resin.router)
+app.include_router(bottle.router)
 app.include_router(vendor.router)
 app.include_router(other.router)
